@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "think-aloud-chess"
+dynamic = ["version"]
+description = "Play chess against an LLM that thinks out loud, then let it teach you with arrows and concepts."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Lucas Rafael de Andrade" }]
+keywords = ["chess", "llm", "claude", "ai", "education", "explainable-ai", "stockfish", "flask"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Web Environment",
+  "Intended Audience :: Education",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+  "Programming Language :: Python :: 3",
+  "Topic :: Games/Entertainment :: Board Games",
+]
+dependencies = ["flask>=3.0", "chess>=1.10"]
+
+[project.optional-dependencies]
+desktop = ["pystray>=0.19", "pillow>=10"]
+dev = ["pytest>=8", "pyinstaller>=6", "pystray>=0.19", "pillow>=10", "playwright>=1.45"]
+
+[project.scripts]
+think-aloud-chess = "think_aloud_chess.cli:main"
+
+[project.gui-scripts]
+think-aloud-chess-desktop = "think_aloud_chess.desktop:main"
+
+[project.urls]
+Homepage = "https://github.com/Andrade020/think-aloud-chess"
+Issues = "https://github.com/Andrade020/think-aloud-chess/issues"
+
+[tool.setuptools]
+packages = ["think_aloud_chess"]
+
+[tool.setuptools.package-data]
+think_aloud_chess = ["static/*", "prompts/*", "assets/*", "examples/*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "think_aloud_chess.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

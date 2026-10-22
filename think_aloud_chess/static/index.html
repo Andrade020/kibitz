@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Think-Aloud Chess</title>
+<link rel="icon" href="/static/icon.png">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1 id="home-link">♞ Think-Aloud Chess <small class="hint" id="ver"></small></h1>
+  <span id="usage-pill" class="pill" hidden></span>
+  <button id="mute" class="pill" title="Ligar/desligar os sons">🔊</button>
+</header>
+
+<main id="lobby">
+  <section class="card" id="health" hidden></section>
+  <section class="card" id="new-card">
+    <h2>Nova partida</h2>
+    <form id="new-form">
+      <label>Você joga de
+        <select name="human_color"><option value="white">Brancas</option><option value="black">Pretas</option><option value="random">Sorteio</option></select>
+      </label>
+      <label>Modelo do jogador
+        <select name="model" id="model-select"></select>
+      </label>
+      <label>Esforço de raciocínio
+        <select name="effort"><option>low</option><option selected>medium</option><option>high</option><option>xhigh</option></select>
+      </label>
+      <details class="adv"><summary>Opções avançadas</summary>
+      <div class="advbox">
+      <label>Briefing inicial
+        <select name="briefing"><option value="memory">revisar conceitos (sem web)</option><option value="web">com busca web (só conceitos)</option><option value="off">nenhum</option></select>
+      </label>
+      <label>Ajuda do motor
+        <select name="assist">
+          <option value="full">completo: material + posição, ranqueado (aprender com a IA)</option>
+          <option value="material">só material em capturas/xeques, sem ranking</option>
+          <option value="none">nenhuma (testa o raciocínio puro)</option>
+        </select>
+      </label>
+      <label class="chk"><input type="checkbox" name="autosave" checked> autosave legível em <code>saves/</code> (para eu poder ler a partida depois)</label>
+      <label class="chk"><input type="checkbox" name="facts" checked> fatos táticos (peças em risco, ameaças, estrutura)</label>
+      <label>Revisor Haiku
+        <select name="reviewer"><option value="auto">só quando há sinal de risco</option><option value="always">sempre</option><option value="off">desligado</option></select>
+      </label>
+      <label>Orçamento suave (US$, 0 = sem teto)
+        <input type="number" name="budget_usd" value="8" min="0" step="0.5">
+      </label>
+      </div></details>
+      <button class="primary" type="submit">Começar</button>
+    </form>
+    <p class="hint">O raciocínio do agente fica <b>oculto durante a partida</b> (jogo justo) e é liberado ao terminar — ou se você marcar "espiar".</p>
+  </section>
+  <details class="card" id="prov-card">
+    <summary>Usar outro modelo via API (opcional)</summary>
+    <div id="prov-list"></div>
+    <form id="prov-form">
+      <input type="hidden" name="id">
+      <label>Modelo de partida (preenche nome e URL)
+        <select id="prov-preset">
+          <option value="">personalizado</option>
+          <option value="DeepSeek|https://api.deepseek.com">DeepSeek</option>
+          <option value="OpenAI|https://api.openai.com/v1">OpenAI</option>
+          <option value="OpenRouter|https://openrouter.ai/api/v1">OpenRouter</option>
+          <option value="Groq|https://api.groq.com/openai/v1">Groq</option>
+          <option value="Together|https://api.together.xyz/v1">Together</option>
+          <option value="Ollama local|http://localhost:11434/v1">Ollama (local)</option>
+        </select>
+      </label>
+      <label>Nome<input name="name" placeholder="ex.: DeepSeek"></label>
+      <label>URL base<input name="base_url" placeholder="ex.: https://api.deepseek.com"></label>
+      <label>Chave (vazio = manter a atual)<input name="api_key" type="password" autocomplete="off"></label>
+      <label>Modelos (separados por vírgula)<input name="models" placeholder="ex.: deepseek-chat, deepseek-reasoner"></label>
+      <button type="submit">Salvar provedor</button>
+    </form>
+    <p class="hint">A chave fica só em <code>config.json</code> no seu computador; não vai para partidas, arquivos exportados nem para o navegador. Modelos via API usam o mesmo fluxo (fatos, sondagem, validação), mas sem busca web e sem custo em US$ (só tokens).</p>
+  </details>
+  <details class="card" id="eng-card">
+    <summary>Motor forte para a revisão do professor <span id="eng-state" class="hint"></span></summary>
+    <p class="hint">Usado <b>só depois da partida</b>, pelo professor, para corrigir explicações com a verdade da posição. O Claude nunca o vê durante o jogo. Sem ele, a revisão usa a régua rasa (menos confiável).</p>
+    <form id="eng-form" class="revform">
+      <label>Caminho do executável UCI (vazio = detectar automaticamente)<input name="path" placeholder="ex.: C:\Stockfish\stockfish.exe"></label>
+      <button type="submit">Salvar e testar</button>
+    </form>
+  </details>
+  <section class="card" id="games-card">
+    <h2>Partidas</h2>
+    <div class="actions" style="margin:0 0 8px">
+      <label class="filebtn">Importar partida<input type="file" id="import-file" accept=".gz,.json" hidden></label>
+      <button id="btn-cleanup" title="Apaga do disco só as partidas encerradas que você já salvou em arquivo">Limpar já salvas</button>
+      <span id="disk" class="hint"></span>
+    </div>
+    <div id="games-list"></div>
+  </section>
+  <footer id="foot" class="hint">Think-Aloud Chess · beta · <a href="https://github.com/Andrade020/think-aloud-chess" target="_blank" rel="noopener">GitHub</a> · motor forte: Stockfish (GPLv3)</footer>
+</main>
+
+<main id="game" hidden>
+  <div class="board-col">
+    <div id="status" class="status"></div>
+    <div class="bwrow">
+      <div id="evalbar" class="evalbar" hidden><div class="evw"></div><span class="evt"></span></div>
+      <div class="boardwrap"><div id="board" class="board"></div><svg id="arrows" viewBox="0 0 8 8" preserveAspectRatio="none"></svg></div>
+    </div>
+    <div id="arrow-legend" class="legend" hidden><span style="color:#2fb344">➔ ideia / melhor</span><span style="color:#e03131">➔ ameaça</span><span style="color:#339af0">➔ plano</span><span style="color:#f08c00">➔ evitar</span><span style="color:#868e96">- - ➔ lance jogado</span></div>
+    <div class="nav">
+      <button data-nav="start">⏮</button><button data-nav="prev">◀</button>
+      <button data-nav="next">▶</button><button data-nav="end">⏭</button>
+    </div>
+    <div class="actions">
+      <button id="btn-new" class="primary" title="Volta às configurações para começar outra partida">＋ Novo jogo</button>
+      <button id="btn-save" title="Baixa a partida (com todo o raciocínio) em um arquivo compacto">💾 Salvar em arquivo</button>
+      <button id="btn-undo" title="Volta à posição anterior ao seu último lance e apaga a resposta do Claude">↶ Desfazer</button>
+      <button id="btn-draw">Oferecer empate</button>
+      <button id="btn-resign">Abandonar</button>
+      <button id="btn-retry" hidden>Tentar de novo</button>
+      <label class="chk"><input type="checkbox" id="autosave-on"> <span id="autosave-lbl">autosave</span></label>
+      <label class="peek"><input type="checkbox" id="peek"> espiar o raciocínio (spoiler)</label>
+    </div>
+  </div>
+  <div class="side-col">
+    <div class="card" id="rv-panel" hidden></div>
+    <div class="card">
+      <h3>Lances</h3>
+      <div id="moves" class="moves"></div>
+    </div>
+    <div class="card" id="thought-card">
+      <h3 id="thought-title">Raciocínio</h3>
+      <div id="thought"></div>
+    </div>
+    <div class="card" id="stats-card" hidden>
+      <h3>Estatísticas da auditoria <small>(motor local, sem tokens)</small></h3>
+      <div id="stats"></div>
+    </div>
+    <div class="card" id="chart-card" hidden>
+      <h3>Avaliação ao longo da partida <small>(+ = brancas melhor)</small></h3>
+      <div id="chart"></div>
+      <p id="agree" class="hint"></p>
+      <div class="legend"><span class="l1">● Claude (nota)</span><span class="l2">● material</span><span class="l3">● motor raso</span></div>
+    </div>
+    <div class="card" id="ask-card" hidden>
+      <h3 id="ask-title">Perguntar ao Claude sobre este lance</h3>
+      <div id="comments"></div>
+      <textarea id="question" rows="3" placeholder="Ex.: Por que você quis dominar a coluna d aqui? O que faria se eu tivesse jogado ...Cf6?"></textarea>
+      <button class="primary" id="btn-ask">Perguntar</button>
+      <span id="ask-status" class="hint"></span>
+    </div>
+  </div>
+</main>
+
+<div id="promo" class="overlay" hidden><div class="card"><h3>Promover para</h3><div id="promo-opts"></div></div></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

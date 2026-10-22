@@ -1,0 +1,20 @@
+# dados do usuário (partidas, autosaves, chaves de API): NUNCA versionar
+/data/
+/games/
+/saves/
+/exports/
+/sandbox/
+config.json
+
+# build e cache
+/build/
+/dist/
+*.egg-info/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.vscode/
+.idea/
+docs/img/_frame.png
