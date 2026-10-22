@@ -10,7 +10,7 @@
 [![CI](https://github.com/Andrade020/think-aloud-chess/actions/workflows/ci.yml/badge.svg)](https://github.com/Andrade020/think-aloud-chess/actions/workflows/ci.yml)
 [![Licença: GPL v3+](https://img.shields.io/badge/licen%C3%A7a-GPL--3.0--or--later-blue.svg)](LICENSE)
 
-[**⬇ Baixar para Windows**](https://github.com/Andrade020/think-aloud-chess/releases/latest) · [English](README.md) · [Arquitetura](docs/ARCHITECTURE.md)
+[**⬇ Baixar para Windows**](https://github.com/Andrade020/think-aloud-chess/releases/download/v0.1.0-beta.1/ThinkAloudChess-0.1.0-beta.1-Setup.exe) · [English](README.md) · [Arquitetura](docs/ARCHITECTURE.md)
 
 <img src="docs/img/review-walkthrough.gif" alt="Modo revisão: passando pela partida, com comentários e setas ao lado do tabuleiro" width="860">
 
@@ -44,7 +44,7 @@ O Think-Aloud Chess é um **jeito justo e auditável de jogar contra um LLM e ap
 
 ### Windows (recomendado)
 
-1. Baixe o **`ThinkAloudChess-<versão>-Setup.exe`** na [última release](https://github.com/Andrade020/think-aloud-chess/releases/latest).
+1. Baixe o **`ThinkAloudChess-<versão>-Setup.exe`** na [página de Releases](https://github.com/Andrade020/think-aloud-chess/releases).
 2. Execute. Não precisa de administrador; o Python e o Stockfish já vêm junto.
 3. Abra o **Think-Aloud Chess**. Um assistente na primeira abertura ajuda a conectar um "cérebro" (sua conta do Claude ou uma chave de API). Dá para abrir a **partida de demonstração**, uma partida terminada com revisão completa, sem gastar um token.
 

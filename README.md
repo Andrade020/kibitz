@@ -12,7 +12,7 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-3776ab)
 ![Platform](https://img.shields.io/badge/installer-Windows-0078d4)
 
-[**⬇ Download for Windows**](https://github.com/Andrade020/think-aloud-chess/releases/latest) · [Português](README.pt-BR.md) · [How it works](docs/ARCHITECTURE.md)
+[**⬇ Download for Windows**](https://github.com/Andrade020/think-aloud-chess/releases/download/v0.1.0-beta.1/ThinkAloudChess-0.1.0-beta.1-Setup.exe) · [Português](README.pt-BR.md) · [How it works](docs/ARCHITECTURE.md)
 
 <img src="docs/img/review-walkthrough.gif" alt="Review mode: stepping through the game, comments and arrows appear next to the board" width="860">
 
@@ -59,7 +59,7 @@ Think-Aloud Chess is a **fair, auditable way to play against an LLM and learn fr
 
 ### Windows (recommended)
 
-1. Download **`ThinkAloudChess-<version>-Setup.exe`** from the [latest release](https://github.com/Andrade020/think-aloud-chess/releases/latest).
+1. Download **`ThinkAloudChess-<version>-Setup.exe`** from the [Releases page](https://github.com/Andrade020/think-aloud-chess/releases).
 2. Run it. No administrator rights needed; Python and Stockfish are bundled.
 3. Open **Think-Aloud Chess**. A first-run assistant helps you connect a "brain" (your Claude account, or an API key). You can also open the **demo game** — a finished game with a full AI review — without spending a single token.
 
