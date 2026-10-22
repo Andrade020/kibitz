@@ -30,7 +30,7 @@ jobs:
           name: windows-installer
           path: build/installer/*
       - name: Build provenance attestation
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: build/installer/*.exe
       - name: Attach to the GitHub release (tags only)
