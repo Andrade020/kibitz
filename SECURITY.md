@@ -3,7 +3,7 @@
 ## Where your secrets live
 
 - API keys are stored **in plain text** in `config.json` inside your local data folder
-  (`%LOCALAPPDATA%\ThinkAloudChess` on Windows, `./data` when running from a clone). The file never leaves your machine, is
+  (`%LOCALAPPDATA%\Kibitz` on Windows, `./data` when running from a clone). The file never leaves your machine, is
   git-ignored, and the keys are never written to games, exports, autosaves, logs or sent to the browser (the UI only sees a masked
   value).
 - Anyone with access to your user account can read that file. Use a key with a spending limit, and **revoke it** at the

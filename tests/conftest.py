@@ -6,7 +6,7 @@ os.environ["TAC_DATA_DIR"] = tempfile.mkdtemp(prefix="tac-test-")
 
 import pytest  # noqa: E402
 
-from think_aloud_chess import app as app_module  # noqa: E402
+from kibitz import app as app_module  # noqa: E402
 
 
 @pytest.fixture()

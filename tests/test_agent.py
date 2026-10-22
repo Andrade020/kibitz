@@ -1,7 +1,7 @@
 import chess
 import pytest
 
-from think_aloud_chess import agent
+from kibitz import agent
 
 
 def test_resolve_move_accepts_san_uci_and_annotations():

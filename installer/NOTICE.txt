@@ -1,7 +1,7 @@
-Think-Aloud Chess - beta
+Kibitz - beta
 
 Este programa roda no seu computador. Suas partidas e chaves de API ficam apenas na sua pasta de dados
-(%LOCALAPPDATA%\ThinkAloudChess); nada é enviado a servidores do projeto.
+(%LOCALAPPDATA%\Kibitz); nada é enviado a servidores do projeto.
 
 Para o Claude jogar, o app usa o Claude Code (a sua conta do Claude) ou uma chave de API de outro provedor.
 Na primeira abertura, uma tela de configuração guia você: instalar o Claude Code, entrar na conta ou colar uma chave.
@@ -11,11 +11,11 @@ Incluído neste instalador:
    https://github.com/official-stockfish/Stockfish
  - Python, Flask (BSD-3), python-chess (GPL-3.0-or-later) e outras bibliotecas.
 
-Think-Aloud Chess é software livre sob a GNU GPL v3 ou posterior. Código-fonte:
-https://github.com/Andrade020/think-aloud-chess
+Kibitz é software livre sob a GNU GPL v3 ou posterior. Código-fonte:
+https://github.com/Andrade020/kibitz
 
 ---
 This program runs on your computer. Your games and API keys stay in your local data folder; nothing is sent
 to any project server. To let Claude play, the app uses Claude Code (your Claude account) or another provider's
 API key; a first-run screen guides you. Bundled: Stockfish 19 (GPLv3), Python, Flask, python-chess (GPL-3.0+).
-Think-Aloud Chess is free software under the GNU GPL v3 or later.
+Kibitz is free software under the GNU GPL v3 or later.

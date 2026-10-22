@@ -3,6 +3,15 @@
 All notable changes are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/); versions follow
 [SemVer](https://semver.org/) with `-beta.N` pre-releases.
 
+## [0.1.0-beta.2] — 2026-10-22
+
+### Changed
+- **Renamed to Kibitz** (formerly "Think-Aloud Chess"). *Kibitz* is the chess term for commenting on someone else's game.
+  The Python package, command (`kibitz`), installer (`Kibitz-<version>-Setup.exe`), data folder (`%LOCALAPPDATA%\Kibitz`) and the
+  repository (`Andrade020/kibitz`) all follow the new name; the old repository URL redirects.
+- New visual identity: dark, cinematic look; new logo (a knight "commenting" with a `!?` bubble), README banner and social preview.
+- README rewritten (English and Portuguese) with a clearer story and screenshots in the dark theme.
+
 ## [0.1.0-beta.1] — 2026-10-22
 
 First public beta.

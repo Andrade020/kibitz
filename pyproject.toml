@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "think-aloud-chess"
+name = "kibitz"
 dynamic = ["version"]
 description = "Play chess against an LLM that thinks out loud, then let it teach you with arrows and concepts."
 readme = "README.md"
@@ -26,23 +26,23 @@ desktop = ["pystray>=0.19", "pillow>=10"]
 dev = ["pytest>=8", "pyinstaller>=6", "pystray>=0.19", "pillow>=10", "playwright>=1.45"]
 
 [project.scripts]
-think-aloud-chess = "think_aloud_chess.cli:main"
+kibitz = "kibitz.cli:main"
 
 [project.gui-scripts]
-think-aloud-chess-desktop = "think_aloud_chess.desktop:main"
+kibitz-desktop = "kibitz.desktop:main"
 
 [project.urls]
-Homepage = "https://github.com/Andrade020/think-aloud-chess"
-Issues = "https://github.com/Andrade020/think-aloud-chess/issues"
+Homepage = "https://github.com/Andrade020/kibitz"
+Issues = "https://github.com/Andrade020/kibitz/issues"
 
 [tool.setuptools]
-packages = ["think_aloud_chess"]
+packages = ["kibitz"]
 
 [tool.setuptools.package-data]
-think_aloud_chess = ["static/*", "prompts/*", "assets/*", "examples/*"]
+kibitz = ["static/*", "prompts/*", "assets/*", "examples/*"]
 
 [tool.setuptools.dynamic]
-version = { attr = "think_aloud_chess.__version__" }
+version = { attr = "kibitz.__version__" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

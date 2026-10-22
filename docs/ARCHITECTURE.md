@@ -1,6 +1,6 @@
 # Architecture
 
-Think-Aloud Chess is a small Flask app (`think_aloud_chess/`) with a vanilla-JS single page (`static/`). Games are plain JSON
+Kibitz is a small Flask app (`kibitz/`) with a vanilla-JS single page (`static/`). Games are plain JSON
 (gzip-compressed on disk). There is no database and no build step for the front end.
 
 ## One move, end to end
@@ -42,12 +42,12 @@ peek by accident. Every move also records whether it equals the hidden engine's 
 
 | Path | Role |
 |---|---|
-| `think_aloud_chess/app.py` | Flask routes, game storage, background threads (agent, audit, review), setup assistant endpoints |
+| `kibitz/app.py` | Flask routes, game storage, background threads (agent, audit, review), setup assistant endpoints |
 | `agent.py`, `providers.py` | Player/reviewer/professor calls; Claude Code CLI and OpenAI-compatible providers |
 | `engine.py`, `facts.py`, `audit.py` | Shallow engine, objective facts, local audit |
 | `strong.py`, `review.py` | Stockfish (UCI) integration and the teacher review pipeline |
 | `autosave.py`, `paths.py` | Markdown autosave; where code resources and user data live |
-| `cli.py`, `desktop.py` | `think-aloud-chess` command; tray launcher used by the Windows installer |
+| `cli.py`, `desktop.py` | `kibitz` command; tray launcher used by the Windows installer |
 | `prompts/` | System prompts (player, reviewer, teacher, professor, briefing) |
 | `installer/` | PyInstaller spec, Inno Setup script, build script |
 | `tools/` | Icon and README-media generators |

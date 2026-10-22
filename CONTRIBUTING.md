@@ -5,11 +5,11 @@ Thanks for helping! This is a beta, so small focused PRs and clear bug reports a
 ## Setup
 
 ```bash
-git clone https://github.com/Andrade020/think-aloud-chess && cd think-aloud-chess
+git clone https://github.com/Andrade020/kibitz && cd kibitz
 python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 pytest                                              # 26 tests, no network, no tokens
-python -m think_aloud_chess                         # data goes to ./data (git-ignored)
+python -m kibitz                         # data goes to ./data (git-ignored)
 ```
 
 You do **not** need an API key or Claude Code to work on most things: the tests fake the model, and the **demo game** (button on
@@ -17,10 +17,10 @@ the home screen) exercises the review UI with a saved review.
 
 ## Where to help
 
-- **i18n**: the UI strings are Portuguese and live in `think_aloud_chess/static/` (`index.html`, `app.js`). A small string table
+- **i18n**: the UI strings are Portuguese and live in `kibitz/static/` (`index.html`, `app.js`). A small string table
   and an English translation would be a great first PR.
 - **Packaging**: macOS/Linux installers (PyInstaller specs are in `installer/`).
-- **Teaching quality**: prompts in `think_aloud_chess/prompts/` (player, reviewer, teacher).
+- **Teaching quality**: prompts in `kibitz/prompts/` (player, reviewer, teacher).
 - **UX/accessibility** of the review mode.
 
 ## Guidelines
@@ -32,5 +32,5 @@ the home screen) exercises the review UI with a saved review.
 
 ## Releasing (maintainers)
 
-Bump `__version__` in `think_aloud_chess/__init__.py`, update `CHANGELOG.md`, tag `vX.Y.Z[-beta.N]`; the *Release* workflow builds
+Bump `__version__` in `kibitz/__init__.py`, update `CHANGELOG.md`, tag `vX.Y.Z[-beta.N]`; the *Release* workflow builds
 the Windows installer and attaches it to the release.

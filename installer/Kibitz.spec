@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(SPECPATH).parent
-PKG = ROOT / "think_aloud_chess"
+PKG = ROOT / "kibitz"
 ver = re.search(r'__version__\s*=\s*"([^"]+)"', (PKG / "__init__.py").read_text(encoding="utf-8")).group(1)
 m = re.match(r"(\d+)\.(\d+)\.(\d+)(?:b(\d+))?", ver)
 nums = tuple(int(x or 0) for x in m.groups())
@@ -18,19 +18,19 @@ vf.write_text(f"""VSVersionInfo(
   kids=[
     StringFileInfo([StringTable('040904B0', [
       StringStruct('CompanyName', 'Lucas Rafael de Andrade'),
-      StringStruct('FileDescription', 'Think-Aloud Chess'),
+      StringStruct('FileDescription', 'Kibitz'),
       StringStruct('FileVersion', '{nums[0]}.{nums[1]}.{nums[2]}.{nums[3]}'),
-      StringStruct('InternalName', 'ThinkAloudChess'),
-      StringStruct('LegalCopyright', 'GPL-3.0-or-later. https://github.com/Andrade020/think-aloud-chess'),
-      StringStruct('OriginalFilename', 'ThinkAloudChess.exe'),
-      StringStruct('ProductName', 'Think-Aloud Chess'),
+      StringStruct('InternalName', 'Kibitz'),
+      StringStruct('LegalCopyright', 'GPL-3.0-or-later. https://github.com/Andrade020/kibitz'),
+      StringStruct('OriginalFilename', 'Kibitz.exe'),
+      StringStruct('ProductName', 'Kibitz'),
       StringStruct('ProductVersion', '{pretty}')])]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
   ]
 )
 """, encoding="utf-8")
 
-datas = [(str(PKG / d), f"think_aloud_chess/{d}") for d in ("static", "prompts", "assets", "examples")]
+datas = [(str(PKG / d), f"kibitz/{d}") for d in ("static", "prompts", "assets", "examples")]
 
 a = Analysis(
     [str(ROOT / "installer" / "desktop_entry.py")],
@@ -44,10 +44,10 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz, a.scripts, [],
     exclude_binaries=True,
-    name="ThinkAloudChess",
+    name="Kibitz",
     console=False,
     icon=str(ROOT / "installer" / "icon.ico"),
     version=str(vf),
     upx=False,
 )
-coll = COLLECT(exe, a.binaries, a.datas, name="ThinkAloudChess", upx=False)
+coll = COLLECT(exe, a.binaries, a.datas, name="Kibitz", upx=False)

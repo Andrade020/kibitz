@@ -1,0 +1,237 @@
+{
+  "bpm": 100,
+  "fps": 30,
+  "old_total_beats": 104,
+  "total_beats": 133.0,
+  "_comment": "As cenas e os cues usam 'batidas originais' (a grade de 104). 'warp' alonga certas cenas para dar tempo de leitura: [inicio, fim, novo_comprimento] em batidas. trailer.html e make_audio.py aplicam a mesma dobra, então imagem e som continuam na mesma batida. 1 batida = 0,6 s.",
+  "warp": [
+    [
+      16,
+      20,
+      6.5
+    ],
+    [
+      20,
+      24,
+      5
+    ],
+    [
+      24,
+      32,
+      10
+    ],
+    [
+      32,
+      36,
+      5
+    ],
+    [
+      36,
+      40,
+      9
+    ],
+    [
+      40,
+      44,
+      5
+    ],
+    [
+      44,
+      48,
+      6.5
+    ],
+    [
+      48,
+      52,
+      5
+    ],
+    [
+      52,
+      60,
+      10
+    ],
+    [
+      60,
+      64,
+      8
+    ],
+    [
+      64,
+      74,
+      12
+    ],
+    [
+      74,
+      80,
+      8
+    ],
+    [
+      80,
+      88,
+      11
+    ]
+  ],
+  "scenes": {
+    "cold": [
+      0,
+      7.6
+    ],
+    "slams": [
+      7.6,
+      20
+    ],
+    "reveal": [
+      20,
+      24
+    ],
+    "title": [
+      24,
+      32
+    ],
+    "live": [
+      32,
+      36
+    ],
+    "think": [
+      36,
+      40
+    ],
+    "counter": [
+      40,
+      44
+    ],
+    "locked": [
+      44,
+      48
+    ],
+    "teacher": [
+      48,
+      52
+    ],
+    "review": [
+      52,
+      60
+    ],
+    "quote": [
+      60,
+      64
+    ],
+    "features": [
+      64,
+      74
+    ],
+    "triple": [
+      74,
+      80
+    ],
+    "install": [
+      80,
+      88
+    ],
+    "finale": [
+      88,
+      104
+    ]
+  },
+  "typing": [
+    {
+      "name": "cold",
+      "b": 1.0,
+      "cps": 24,
+      "n": 41,
+      "vol": 1.0
+    },
+    {
+      "name": "think1",
+      "b": 36.0,
+      "offset": 0.3,
+      "cps": 34,
+      "n": 14,
+      "vol": 0.5
+    },
+    {
+      "name": "think2",
+      "b": 36.0,
+      "offset": 0.9,
+      "cps": 34,
+      "n": 17,
+      "vol": 0.5
+    },
+    {
+      "name": "think3",
+      "b": 36.0,
+      "offset": 1.5,
+      "cps": 34,
+      "n": 57,
+      "vol": 0.5
+    },
+    {
+      "name": "think4",
+      "b": 36.0,
+      "offset": 3.3,
+      "cps": 34,
+      "n": 34,
+      "vol": 0.5
+    },
+    {
+      "name": "quote",
+      "b": 60.4,
+      "cps": 34,
+      "n": 97,
+      "vol": 0.6
+    },
+    {
+      "name": "tag",
+      "b": 27.0,
+      "cps": 24,
+      "n": 25,
+      "vol": 0.8
+    },
+    {
+      "name": "def",
+      "b": 29.0,
+      "cps": 30,
+      "n": 60,
+      "vol": 0.4
+    },
+    {
+      "name": "url",
+      "b": 94.0,
+      "cps": 24,
+      "n": 28,
+      "vol": 0.8
+    }
+  ],
+  "slams": [
+    8,
+    11,
+    14,
+    20,
+    24,
+    40,
+    74,
+    76,
+    78,
+    88
+  ],
+  "arrow_pops": [
+    53.0,
+    56.3,
+    58.9
+  ],
+  "feature_hits": [
+    64,
+    66.5,
+    69,
+    71.5
+  ],
+  "flashes": [
+    20,
+    24,
+    40,
+    74,
+    76,
+    78,
+    88
+  ]
+}

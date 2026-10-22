@@ -3,7 +3,7 @@
 Dados do usuário (partidas, autosaves, config.json com chaves de API):
   1. variável de ambiente TAC_DATA_DIR (ou --data-dir na linha de comando), se existir;
   2. rodando de um clone do repositório: ./data (ignorado pelo git);
-  3. instalado (pip) ou executável: pasta de dados do sistema (ex.: %LOCALAPPDATA%\\ThinkAloudChess).
+  3. instalado (pip) ou executável: pasta de dados do sistema (ex.: %LOCALAPPDATA%\\Kibitz).
 """
 import os
 import sys
@@ -29,7 +29,7 @@ def _default_data_dir():
         base = Path.home() / "Library" / "Application Support"
     else:
         base = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
-    return base / "ThinkAloudChess"
+    return base / "Kibitz"
 
 
 DATA = _default_data_dir()

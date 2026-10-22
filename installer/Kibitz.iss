@@ -1,12 +1,12 @@
-; Instalador do Think-Aloud Chess (Inno Setup 6). Uso: iscc /DAppVersion=0.1.0-beta.1 /DFileVersion=0.1.0.1 ThinkAloudChess.iss
+; Instalador do Kibitz (Inno Setup 6). Uso: iscc /DAppVersion=0.1.0-beta.1 /DFileVersion=0.1.0.1 Kibitz.iss
 #ifndef AppVersion
   #define AppVersion "0.1.0-beta.1"
 #endif
 #ifndef FileVersion
   #define FileVersion "0.1.0.1"
 #endif
-#define AppName "Think-Aloud Chess"
-#define AppExe "ThinkAloudChess.exe"
+#define AppName "Kibitz"
+#define AppExe "Kibitz.exe"
 
 [Setup]
 AppId={{7D3A5C61-2B4E-4F0A-9E5B-6C1A0F2D8B34}
@@ -14,20 +14,20 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher=Lucas Rafael de Andrade
-AppPublisherURL=https://github.com/Andrade020/think-aloud-chess
-AppSupportURL=https://github.com/Andrade020/think-aloud-chess/issues
-AppUpdatesURL=https://github.com/Andrade020/think-aloud-chess/releases
+AppPublisherURL=https://github.com/Andrade020/kibitz
+AppSupportURL=https://github.com/Andrade020/kibitz/issues
+AppUpdatesURL=https://github.com/Andrade020/kibitz/releases
 VersionInfoVersion={#FileVersion}
 VersionInfoProductName={#AppName}
 VersionInfoDescription=Instalador do {#AppName}
 ; instalação por usuário: não pede administrador (menos telas de permissão) e instala em %LOCALAPPDATA%\Programs
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-DefaultDirName={autopf}\ThinkAloudChess
+DefaultDirName={autopf}\Kibitz
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 OutputDir=..\build\installer
-OutputBaseFilename=ThinkAloudChess-{#AppVersion}-Setup
+OutputBaseFilename=Kibitz-{#AppVersion}-Setup
 SetupIconFile=icon.ico
 UninstallDisplayIcon={app}\{#AppExe}
 Compression=lzma2/max
@@ -49,7 +49,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "installclaude"; Description: "Instalar o Claude Code (necessário para jogar com a sua conta do Claude; dispensável se for usar uma chave de API)"; GroupDescription: "Componentes:"; Check: WingetAvailable
 
 [Files]
-Source: "..\build\dist\ThinkAloudChess\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "..\build\dist\Kibitz\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 Source: "..\build\stockfish_pkg\*"; DestDir: "{app}\bin"; Flags: recursesubdirs createallsubdirs ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -76,7 +76,7 @@ var
 begin
   if CurUninstallStep = usPostUninstall then
   begin
-    DataDir := ExpandConstant('{localappdata}\ThinkAloudChess');
+    DataDir := ExpandConstant('{localappdata}\Kibitz');
     if DirExists(DataDir) then
       if SuppressibleMsgBox('Remover também as suas partidas e configurações?' + #13#10 + DataDir + #13#10#13#10 +
                 '(Escolha "Não" para guardá-las caso reinstale depois.)', mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDNO) = IDYES then

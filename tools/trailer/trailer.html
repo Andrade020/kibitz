@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=JetBrains+Mono:wght@400;700&family=Oswald:wght@500;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;transition:none!important;animation:none!important}
+html,body{width:1920px;height:1080px;background:#05070a;overflow:hidden}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:#05070a;font-family:Inter,'Segoe UI',sans-serif;color:#eef1f6}
+.layer,.scene{position:absolute;inset:0}
+.scene{display:none;overflow:hidden}
+.center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+.slam{font-family:Oswald,Bahnschrift,Impact,sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.012em;line-height:.98;color:#fff}
+.mono{font-family:'JetBrains Mono',Consolas,monospace}
+.yel{color:#f6e05e}.grn{color:#36d399}.red{color:#ff5d73}.blu{color:#5aa2ff}
+.boardbg{position:absolute;left:420px;top:0;width:1080px;height:1080px;background:center/1080px 1080px no-repeat}
+.win{position:absolute;border-radius:20px;overflow:hidden;box-shadow:0 50px 140px rgba(0,0,0,.85),0 0 0 2px rgba(255,255,255,.08)}
+.win img{display:block;width:100%;height:100%}
+.full{position:absolute;left:0;top:0;width:1920px;height:1080px}
+.pill{position:absolute;font-family:Oswald,Impact,sans-serif;font-weight:700;font-size:46px;letter-spacing:.02em;text-transform:uppercase;color:#05070a;background:#f6e05e;padding:8px 26px 6px;border-radius:10px;white-space:nowrap;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.cap{font-family:Inter,sans-serif;font-weight:500;color:#aab3c2}
+.chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:34px;padding:10px 22px;border-radius:12px;border:2px solid #2a3340;background:#0d121a;margin:8px}
+#vig{background:radial-gradient(ellipse at center,rgba(0,0,0,0) 52%,rgba(0,0,0,.72) 100%);pointer-events:none}
+#grain{opacity:.07;pointer-events:none}
+#flash{background:#fff;opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+const D = window.__DATA, TL = D.tl, META = D.meta, SPB = 60 / TL.bpm, S = TL.scenes;
+const A = n => `${D.base}/${n}.png`;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (b, b0, b1) => clamp((b - b0) / (b1 - b0));
+const lerp = (a, b, t) => a + (b - a) * t;
+const eo3 = x => 1 - Math.pow(1 - x, 3);
+const eo5 = x => 1 - Math.pow(1 - x, 5);
+const eob = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const eio = x => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const eoe = x => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x));
+const rnd = s => { const v = Math.sin(s * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+/* --- "dobra de tempo": alonga cenas para dar tempo de leitura. Todo o código de cena usa batidas ORIGINAIS (b);
+       renderFrame converte o tempo real para elas. KST = quanto a cena atual foi esticada (para manter a velocidade de digitação real). */
+const WARP = (() => {
+  let o = 0, n = 0; const pts = [[0, 0]];
+  for (const [a, b, L] of [...TL.warp].sort((x, y) => x[0] - y[0])) {
+    if (a > o) { n += a - o; o = a; pts.push([o, n]); }
+    n += L; o = b; pts.push([o, n]);
+  }
+  if (o < TL.old_total_beats) { n += TL.old_total_beats - o; pts.push([TL.old_total_beats, n]); }
+  return pts;
+})();
+const oldFromNew = bn => { for (let i = 1; i < WARP.length; i++) { const [o0, n0] = WARP[i - 1], [o1, n1] = WARP[i]; if (bn <= n1) return o0 + (bn - n0) * (o1 - o0) / (n1 - n0); } return WARP[WARP.length - 1][0]; };
+const stretchAt = bo => { for (let i = 1; i < WARP.length; i++) { const [o0, n0] = WARP[i - 1], [o1, n1] = WARP[i]; if (bo <= o1) return (n1 - n0) / (o1 - o0); } return 1; };
+let KST = 1, BN = 0;
+const typed = (str, b, b0, cps) => str.slice(0, Math.max(0, Math.floor((b - b0) * KST * SPB * cps)));
+
+const stage = document.getElementById("stage");
+const mk = (html, cls = "scene") => { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; stage.appendChild(d); return d; };
+const camT = (fx, fy, s) => `translate(${960 - fx * s}px, ${540 - fy * s}px) scale(${s})`;
+function keyframes(b, kfs) {
+  if (b <= kfs[0][0]) return kfs[0].slice(1);
+  for (let i = 1; i < kfs.length; i++) if (b <= kfs[i][0]) {
+    const p = eio(seg(b, kfs[i - 1][0], kfs[i][0]));
+    return [1, 2, 3].map(k => lerp(kfs[i - 1][k], kfs[i][k], p));
+  }
+  return kfs[kfs.length - 1].slice(1);
+}
+
+/* ------------------------------------------------------------ camadas globais */
+const bg = mk(`<div id="bgp" style="position:absolute;inset:0;background:repeating-conic-gradient(#fff 0 25%,transparent 0 50%) 0 0/180px 180px;opacity:.05"></div>
+  <div id="glow" style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,rgba(246,224,94,.18),transparent 62%);opacity:0"></div>`, "layer");
+bg.style.display = "block";
+
+const cold = mk(`<div class="center"><div id="c0" class="mono" style="font-size:60px;color:#d9dee7;max-width:1500px"></div></div>`);
+const slams = mk(`<div id="s1b" class="boardbg"></div>${[0, 1, 2, 3, 4, 5].map(i => `<div class="boardbg sl" data-i="${i}"></div>`).join("")}
+  <div class="center"><div id="s1t" class="slam" style="font-size:190px"></div></div>
+  <div class="center"><div id="s1q" style="font-family:Inter;font-weight:800;font-size:104px;line-height:1.12;max-width:1500px"></div></div>`);
+const reveal = mk(`<div id="s2b" class="boardbg"></div><div id="s2band" style="position:absolute;left:420px;width:1080px;top:324px;height:420px;background:repeating-linear-gradient(90deg,#0a0a0c 0 14px,#101014 14px 28px);box-shadow:0 0 90px #000;border-top:3px solid #1b1b20;border-bottom:3px solid #1b1b20"></div>
+  <div class="center"><div id="s2t" class="slam" style="font-size:300px"></div></div>
+  <div id="s2s" class="mono" style="position:absolute;left:0;right:0;bottom:120px;text-align:center;font-size:60px;color:#fff;text-shadow:0 4px 30px #000"></div>`);
+const title = mk(`<div id="tlogo" style="position:absolute;left:50%;top:70px;margin-left:-115px;width:230px;height:230px"><img src="${A("../icon")}" style="width:230px;height:230px;filter:drop-shadow(0 20px 60px rgba(246,224,94,.35))"></div>
+  <div class="center" style="top:20px"><div id="tt1" class="slam" style="font-size:340px;position:relative;letter-spacing:.04em"></div></div>
+  <div id="ttag" class="mono" style="position:absolute;left:0;right:0;top:770px;text-align:center;font-size:62px;color:#f2f4f8"></div>
+  <div id="tdef" class="mono" style="position:absolute;left:0;right:0;top:880px;text-align:center;font-size:36px;color:#9aa4b6"></div>`);
+const live = mk(`<div class="win" id="lw" style="left:470px;top:150px;width:1400px;height:787px"><img src="${A("live")}"></div>
+  <div id="lt" class="slam" style="position:absolute;left:70px;top:230px;width:460px;font-size:104px"></div>`);
+const think = mk(`<div class="full" style="background:url(${A("board")}) center/1080px no-repeat;filter:blur(18px) brightness(.28)"></div>
+  <div id="tc" style="position:absolute;left:210px;top:170px;width:1500px;padding:48px 60px;border-radius:26px;background:rgba(10,14,20,.9);border:2px solid #263041;box-shadow:0 40px 140px #000">
+    <div style="display:flex;align-items:center;gap:16px;font-family:'JetBrains Mono';font-weight:700;font-size:30px;color:#f6e05e;letter-spacing:.06em"><span id="dot" style="width:18px;height:18px;border-radius:50%;background:#36d399;display:inline-block"></span>CLAUDE · PENSANDO EM VOZ ALTA</div>
+    <div id="tcb" class="mono" style="margin-top:34px;font-size:36px;line-height:1.5;color:#dfe5ee"></div></div>
+  <div class="cap" style="position:absolute;left:0;right:0;bottom:80px;text-align:center;font-size:30px">raciocínio real, de uma partida real</div>`);
+const counter = mk(`<div id="cmoves" class="mono" style="position:absolute;inset:-100px;font-size:34px;line-height:1.7;color:#fff;opacity:.07;white-space:pre-wrap;word-break:break-all"></div>
+  <div class="center"><div id="cl1" class="slam" style="font-size:270px"></div><div id="cl2" class="cap" style="font-size:52px;margin-top:34px;color:#c3cad6"></div></div>`);
+const locked = mk(`<div id="lcam" style="position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0"><img class="full" src="${A("live")}"><div id="lring" style="position:absolute;left:969px;top:549px;width:852px;height:212px;border:5px solid #f6e05e;border-radius:18px;box-shadow:0 0 60px rgba(246,224,94,.6)"></div></div>
+  <div id="ldark" class="layer" style="background:#000"></div>
+  <div style="position:absolute;left:90px;bottom:100px"><svg id="lock" width="110" height="110" viewBox="0 0 24 24" fill="none" stroke="#f6e05e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10.5" rx="2.2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
+    <div id="lt1" class="slam" style="font-size:112px;margin-top:14px"></div><div id="lt2" class="cap" style="font-size:46px;margin-top:12px"></div></div>`);
+const teacher = mk(`<div class="center"><div id="th1" class="mono" style="font-size:64px;color:#c9d1dd"></div><div id="th2" class="slam yel" style="font-size:230px;margin-top:10px"></div></div>`);
+const review = mk(`<div id="rcam" style="position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0">
+  ${[10, 7, 1].map(m => `<img class="full" id="r${m}n" src="${A(`m${m}_noarrows`)}"><img class="full" id="r${m}a" src="${A(`m${m}_arrows`)}">`).join("")}
+  <div id="p1" class="pill" style="left:620px;top:430px">Setas no tabuleiro</div>
+  <div id="p2" class="pill" style="left:150px;top:290px">Stockfish como verdade</div>
+  <div id="p3" class="pill" style="left:1010px;top:305px">Explica por conceitos</div></div>`);
+const quote = mk(`<div style="position:absolute;left:170px;top:70px;font-family:Oswald;font-size:420px;line-height:1;color:#f6e05e;opacity:.9">“</div>
+  <div id="qt" style="position:absolute;left:330px;top:380px;width:1300px;font-family:Inter;font-weight:700;font-style:italic;font-size:62px;line-height:1.28;color:#fff"></div>
+  <div id="qa" class="cap" style="position:absolute;left:330px;top:820px;font-size:38px"></div>`);
+const FEATURES = [
+  { w: ["QUALQUER IA", "COMPATÍVEL"], c: "Claude, DeepSeek, OpenAI, Ollama…", v: () => ["Claude Code", "DeepSeek", "OpenAI", "OpenRouter", "Ollama"].map(n => `<span class="chip" style="font-size:52px">${n}</span>`).join("<br>") },
+  { w: ["TUDO NO SEU", "COMPUTADOR"], c: "sem telemetria · suas chaves ficam com você", v: () => `<div class="slam" style="font-size:360px;color:#fff">🖥</div>` },
+  { w: ["SALVE E", "DESFAÇA"], c: "importe, exporte, volte um lance", v: () => `<div class="chip" style="font-size:78px;padding:30px 54px;border-color:#f6e05e">↶ Desfazer</div><br><div class="chip" style="font-size:44px;padding:20px 34px">minha-partida.xadrez.gz</div>` },
+  { w: ["OPEN", "SOURCE"], c: "código aberto, no GitHub", v: () => `<div class="chip" style="font-size:76px;padding:34px 56px;border-color:#36d399;color:#36d399">{ open source }</div>` },
+];
+const features = mk(FEATURES.map(f => `<div class="fc" style="position:absolute;inset:0;display:none">
+  <div style="position:absolute;left:110px;top:330px"><div class="slam fw" style="font-size:176px">${f.w[0]}<br><span class="yel">${f.w[1]}</span></div><div class="cap" style="font-size:46px;margin-top:26px">${f.c}</div></div>
+  <div class="fv" style="position:absolute;left:1000px;top:150px;width:860px;display:flex;align-items:center;justify-content:center;flex-direction:column;height:780px;text-align:center">${f.v()}</div></div>`).join(""));
+features.id = "features";
+const triple = mk(`<div id="tb" class="boardbg" style="filter:brightness(.38) saturate(1.2)"></div><div class="center"><div id="tr" class="slam" style="font-size:250px"></div></div>`);
+const install = mk(`<div class="win" id="iw" style="left:880px;top:150px;width:1000px;height:562px"><img src="${A("setup")}"></div>
+  <div id="ihl" style="position:absolute;border:5px solid #f6e05e;border-radius:12px;box-shadow:0 0 50px rgba(246,224,94,.7)"></div>
+  <div style="position:absolute;left:90px;top:170px;width:760px"><div id="i1" class="slam" style="font-size:160px"></div>
+   <div id="i2" class="mono" style="font-size:48px;line-height:1.7;margin-top:34px;color:#e6ebf3"></div>
+   <div id="i3" class="cap" style="font-size:36px;margin-top:30px;line-height:1.5"></div></div>
+  <div id="i4" class="cap" style="position:absolute;left:880px;top:760px;width:1000px;font-size:42px;line-height:1.45;color:#dfe6f0"></div>`);
+const finale = mk(`<div id="flogo" style="position:absolute;left:50%;top:50px;margin-left:-95px;width:190px;height:190px"><img src="${A("../icon")}" style="width:190px;height:190px;filter:drop-shadow(0 20px 60px rgba(246,224,94,.4))"></div>
+  <div class="center" style="top:-10px"><div id="f1" class="slam" style="font-size:310px;position:relative;letter-spacing:.04em"></div></div>
+  <div id="ftag" class="mono" style="position:absolute;left:0;right:0;top:730px;text-align:center;font-size:60px;color:#f2f4f8"></div>
+  <div id="fmeta" class="cap" style="position:absolute;left:0;right:0;top:825px;text-align:center;font-size:36px;letter-spacing:.14em;text-transform:uppercase"></div>
+  <div id="furl" class="mono yel" style="position:absolute;left:0;right:0;top:895px;text-align:center;font-size:56px;font-weight:700"></div>
+  <div id="fnote" class="cap" style="position:absolute;left:0;right:0;top:995px;text-align:center;font-size:32px"></div>`);
+const vig = mk("", "layer"); vig.id = "vig"; vig.style.display = "block";
+const grainEl = mk("", "layer"); grainEl.id = "grain"; grainEl.style.display = "block";
+const flash = mk("", "layer"); flash.id = "flash"; flash.style.display = "block";
+(() => { const c = document.createElement("canvas"); c.width = c.height = 200; const x = c.getContext("2d"), im = x.createImageData(200, 200);
+  for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+  x.putImageData(im, 0, 0); grainEl.style.background = `url(${c.toDataURL()})`; })();
+
+const scenes = { cold, slams, reveal, title, live, think, counter, locked, teacher, review, quote, features, triple, install, finale };
+const $ = id => document.getElementById(id);
+const beatPulse = () => Math.pow(1 - (BN - Math.floor(BN)), 3);
+const slamAt = (b, cues, len = .7) => Math.max(0, ...cues.map(c => (b >= c ? 1 - seg(b, c, c + len) : 0)));
+const spellWord = (id, str, b, b0, base, sw) => { $(id).innerHTML = [...str].map((ch, i) => { const k = seg(b, b0 + i * .07, b0 + i * .07 + .22);
+  const gl = sw > 0 && sw < 1 ? clamp(1 - Math.abs(i / (str.length - 1) - (sw * 1.5 - .25)) * 4.5) : 0;
+  return `<span style="display:inline-block;opacity:${k};transform:translateY(${(1 - eo5(k)) * 60}px) scale(${lerp(1.3, 1, eo5(k)) * (1 + gl * .05)});color:${gl > .05 ? "#fffbe0" : base};text-shadow:0 0 ${gl * 46}px rgba(246,224,94,${gl})">${ch}</span>`; }).join(""); };
+
+/* ------------------------------------------------------------ renderFrame */
+window.renderFrame = function (t) {
+  const bn = t / SPB, b = oldFromNew(bn), fr = Math.floor(t * 30);
+  BN = bn; KST = stretchAt(b);
+  for (const [k, el] of Object.entries(scenes)) el.style.display = (b >= S[k][0] && b < S[k][1]) ? "block" : "none";
+  $("bgp").style.backgroundPosition = `${-(t * 24) % 360}px ${-(t * 14) % 360}px`;
+  $("bgp").style.opacity = .045 + .04 * beatPulse() * (b > 24 ? 1 : .3);
+
+  // abertura
+  if (b < S.cold[1]) {
+    const s = "Você já tentou jogar xadrez contra uma IA?", g = seg(b, 6.4, 7.5);
+    $("c0").textContent = typed(s, b, 1.0, 24) + ((Math.floor(t * 3.4) % 2 === 0 || t < 2) ? "█" : " ");
+    $("c0").style.opacity = String(1 - g * (rnd(fr) > .35 ? 1 : .15));
+    $("c0").style.transform = `translateX(${(rnd(fr + 9) - .5) * g * 90}px)`;
+    $("c0").style.textShadow = g > 0 ? `${g * 10}px 0 #ff2e63, ${-g * 10}px 0 #08f7fe` : "none";
+  }
+  // "inventa peças…" e a pergunta
+  if (b >= S.slams[0] && b < S.slams[1]) {
+    const gl = slamAt(b, [8, 11, 14], .8), dim = lerp(.42, .2, seg(b, 16, 19.5));
+    const filt = `grayscale(.85) brightness(${dim}) contrast(1.15)`;
+    $("s1b").style.filter = filt;
+    document.querySelectorAll(".sl").forEach(el => {
+      const i = +el.dataset.i, y0 = (i * 16 + rnd(fr * .5 + i) * 6), h = 9 + rnd(i + fr * .3) * 8;
+      el.style.filter = filt; el.style.opacity = gl > .05 ? "1" : "0";
+      el.style.clipPath = `inset(${y0}% 0 ${100 - y0 - h}% 0)`;
+      el.style.transform = `translateX(${(rnd(fr + i * 7) - .5) * gl * 220}px)`;
+    });
+    const sl = [{ b: 8, t: "INVENTA<br>PEÇAS." }, { b: 11, t: "TELETRANSPORTA<br>A DAMA." }, { b: 14, t: "DECLARA MATES<br>QUE NÃO EXISTEM." }];
+    const cur = [...sl].reverse().find(s => b >= s.b && b < 16.0), el = $("s1t");
+    if (cur) {
+      const x = b - cur.b, sp = (1 - seg(x, 0, .5)) * 16;
+      el.innerHTML = cur.t; el.style.opacity = String(seg(x, 0, .06) * (1 - seg(x, 2.55, 3)));
+      el.style.transform = `scale(${lerp(1.4, 1, eo5(seg(x, 0, .3)))}) translate(${(rnd(fr) - .5) * (1 - seg(x, 0, .6)) * 24}px, 0)`;
+      el.style.textShadow = `${sp}px 0 #ff2e63, ${-sp}px 0 #08f7fe, 0 8px 50px #000`;
+    } else el.style.opacity = "0";
+    const words = ["E se o problema", "nunca foi a", "inteligência?"];
+    const q = b >= 16 && b < 19.9 ? words.map((w, i) => {
+      const vis = b >= 16 + i * 1.15;
+      if (i < 2) return `<span style="opacity:${vis ? 1 : 0}">${w} </span>`;
+      const st = seg(b, 19.0, 19.35);
+      return `<span style="opacity:${vis ? 1 : 0};color:#f6e05e;position:relative;display:inline-block">${w}<span style="position:absolute;left:0;top:54%;height:9px;background:#ff5d73;width:${st * 100}%"></span></span>`;
+    }).join("<br>") : "";
+    $("s1q").innerHTML = q; $("s1q").style.opacity = String(1 - seg(b, 19.55, 19.95));
+  }
+  // "era a visão"
+  if (b >= S.reveal[0] && b < S.reveal[1]) {
+    const lift = eio(seg(b, 21.45, 21.95)), x = b - 20;
+    $("s2b").style.filter = `brightness(${lerp(.55, .95, lift)}) saturate(${lerp(.4, 1.15, lift)})`;
+    $("s2band").style.transform = `translateY(${-lift * 760}px)`; $("s2band").style.opacity = String(1 - seg(b, 21.8, 22));
+    const el = $("s2t"); el.innerHTML = b < 21.5 ? "ERA A<br>VISÃO." : "";
+    el.style.opacity = String(seg(x, 0, .05) * (1 - seg(b, 21.4, 21.55)));
+    el.style.transform = `scale(${lerp(1.5, 1, eo5(seg(x, 0, .3)))})`;
+    el.style.textShadow = `${(1 - seg(x, 0, .5)) * 22}px 0 #ff2e63, ${-(1 - seg(x, 0, .5)) * 22}px 0 #08f7fe`;
+    $("s2s").textContent = typed("Ela jogava de olhos vendados.", b, 21.7, 26); $("s2s").style.opacity = String(1 - seg(b, 23.5, 23.9));
+  }
+  // título: KIBITZ + o que o nome significa
+  if (b >= S.title[0] && b < S.title[1]) {
+    const x = b - 24, pop = eob(seg(x, 0, .55));
+    $("tlogo").style.transform = `scale(${pop}) rotate(${(1 - pop) * -25}deg) translateY(${Math.sin(t * 2) * 5}px)`;
+    spellWord("tt1", "KIBITZ", b, 24.5, "#ffffff", seg(b, 26.4, 28.4));
+    $("ttag").textContent = typed("A IA que joga. E comenta.", b, 27.0, 24);
+    $("tdef").textContent = typed("kibitz /ˈkɪbɪts/ v. comentar a partida de quem está jogando.", b, 29.0, 30);
+    $("tdef").style.opacity = String(seg(b, 29.0, 29.3));
+    $("glow").style.opacity = String(.5 + .5 * beatPulse());
+    title.style.transform = `scale(${1 + seg(b, 31.4, 32) * .3})`; title.style.opacity = String(1 - seg(b, 31.5, 32));
+  } else $("glow").style.opacity = "0";
+  if (!(b >= S.title[0] && b < S.title[1])) title.style.transform = "";
+  // a janela do jogo
+  if (b >= S.live[0] && b < S.live[1]) {
+    const x = b - 32, k = eo5(seg(x, 0, 1.1));
+    const w = $("lw"); w.style.opacity = String(k);
+    w.style.transform = `perspective(2200px) rotateX(${lerp(14, 2, k)}deg) rotateY(${lerp(-18, -4, k)}deg) translateY(${lerp(180, 0, k)}px) scale(${lerp(.86, 1.04, seg(x, 0, 4))})`;
+    const words = ["JOGUE CONTRA", "UM LLM QUE", "PENSA EM", "VOZ ALTA."];
+    $("lt").innerHTML = words.map((ww, i) => `<div style="opacity:${seg(b, 32.4 + i * .35, 32.7 + i * .35)};transform:translateX(${(1 - eo5(seg(b, 32.4 + i * .35, 32.9 + i * .35))) * -60}px)${i >= 2 ? ";color:#f6e05e" : ""}">${ww}</div>`).join("");
+  }
+  // o raciocínio da IA, em camadas (trechos verbatim de um lance real, em ritmo legível)
+  if (b >= S.think[0] && b < S.think[1]) {
+    const rt = (b - 36) * KST * SPB, cps = 34;
+    const L = [["LEITURA", "Posição igual.", .3], ["AMEAÇAS", "Nenhuma imediata.", .9],
+      ["PLANO", "Oferecer troca de damas com Qe6 e pressionar o isolado d4…", 1.5], ["CHECAGEM ANTI-ERRO", "Sem xeque ou mate para as Brancas.", 3.3]];
+    $("tcb").innerHTML = L.map(([lab, txt, s0]) => {
+      const n = Math.max(0, Math.floor((rt - s0) * cps)), shown = txt.slice(0, n), rest = txt.slice(n);
+      return `<div style="margin-bottom:22px;opacity:${rt >= s0 ? 1 : 0}"><span style="color:#f6e05e;font-weight:700">${lab}</span> <span>${esc(shown)}</span><span style="opacity:0">${esc(rest)}</span></div>`;
+    }).join("");
+    $("dot").style.opacity = String(.5 + .5 * Math.abs(Math.sin(t * 5)));
+    const k = eo5(seg(rt, 0, .35)); $("tc").style.transform = `scale(${lerp(.94, 1, k)})`; $("tc").style.opacity = String(k * (1 - seg(rt, 5.0, 5.4)));
+  }
+  // "sem lances ilegais"
+  if (b >= S.counter[0] && b < S.counter[1]) {
+    const x = b - 40, sp = (1 - seg(x, 0, .5)) * 18, el = $("cl1");
+    el.innerHTML = "SEM LANCES<br><span class=\"grn\">ILEGAIS.</span>"; el.style.opacity = String(seg(x, 0, .05));
+    el.style.transform = `scale(${lerp(1.5, 1, eo5(seg(x, 0, .3)))})`;
+    el.style.textShadow = `${sp}px 0 #ff2e63, ${-sp}px 0 #08f7fe`;
+    $("cl2").textContent = typed("cada lance é conferido contra as regras", b, 41.0, 34);
+    const mv = "a3 a4 b3 b4 c3 c4 d3 d4 e3 e4 f3 f4 g3 g4 h3 h4 Na3 Nc3 Nf3 Nh3 Bd2 Be3 Bf4 Bg5 Qd2 Qe2 Qd3 Kd1 O-O Rb1 ";
+    $("cmoves").textContent = mv.repeat(30); $("cmoves").style.transform = `translateY(${-t * 46}px)`;
+  }
+  // raciocínio trancado
+  if (b >= S.locked[0] && b < S.locked[1]) {
+    const k = eio(seg(b, 44, 45.4)), s = lerp(1, 2.35, k), fx = 1395, fy = 650;
+    $("lcam").style.transform = camT(lerp(960, fx, k), lerp(540, fy, k), s);
+    $("ldark").style.opacity = String(lerp(0, .55, k) + seg(b, 47.3, 48) * .45);
+    $("lring").style.opacity = String(seg(b, 45, 45.5));
+    $("lock").style.transform = `scale(${eob(seg(b, 45.2, 45.8))})`;
+    $("lt1").textContent = typed("RACIOCÍNIO TRANCADO", b, 45.4, 40);
+    $("lt2").textContent = typed("até o último lance. Jogo justo.", b, 46.0, 34);
+  }
+  // "depois da partida, ela vira professora"
+  if (b >= S.teacher[0] && b < S.teacher[1]) {
+    $("th1").textContent = typed("Depois da partida,", b, 48.3, 24);
+    const x = b - 50; $("th2").innerHTML = b >= 50 ? "ELA VIRA<br>PROFESSORA." : "";
+    $("th2").style.transform = `scale(${lerp(1.35, 1, eo5(seg(x, 0, .35)))})`; $("th2").style.opacity = String(seg(x, 0, .06) * (1 - seg(b, 51.6, 52)));
+  }
+  // revisão com setas (comentários sobre lances da IA)
+  if (b >= S.review[0] && b < S.review[1]) {
+    const seqs = [
+      { m: 10, a: 52, e: 55.5, pop: 53.0, kf: [[52, 960, 540, 1.0], [53.0, 690, 470, 1.55], [54.6, 690, 470, 1.62], [55.5, 1380, 520, 1.55]] },
+      { m: 7, a: 55.5, e: 58.5, pop: 56.3, kf: [[55.5, 700, 560, 1.5], [56.3, 560, 600, 1.7], [58.0, 1370, 600, 1.55], [58.5, 1300, 600, 1.5]] },
+      { m: 1, a: 58.5, e: 60.0, pop: 58.9, kf: [[58.5, 700, 560, 1.4], [59.2, 700, 560, 1.7], [60.0, 960, 540, 1.1]] }];
+    const sq = seqs.find(s => b >= s.a && b < s.e) || seqs[2];
+    for (const m of [10, 7, 1]) { $(`r${m}n`).style.opacity = m === sq.m ? "1" : "0"; $(`r${m}a`).style.opacity = m === sq.m ? String(eo3(seg(b, sq.pop, sq.pop + .35))) : "0"; }
+    const [fx, fy, sc] = keyframes(b, sq.kf);
+    $("rcam").style.transform = camT(fx, fy, sc * (1 + .035 * (1 - seg(b, sq.pop, sq.pop + .5)) * seg(b, sq.pop, sq.pop + .05)));
+    const pill = (id, b0, b1) => { const el = $(id), k = eob(seg(b, b0, b0 + .3)) * (1 - seg(b, b1 - .25, b1)); el.style.opacity = String(clamp(k)); el.style.transform = `scale(${clamp(k, 0, 1.15)}) rotate(-2deg)`; };
+    pill("p1", 53.3, 55.2); pill("p2", 54.0, 55.5); pill("p3", 57.0, 58.7);
+  }
+  // citação real da professora
+  if (b >= S.quote[0] && b < S.quote[1]) {
+    const q = "Não consigo sustentar a variante exata só com conceitos, então não vou inventar uma justificativa.";
+    const n = Math.max(0, Math.floor((b - 60.4) * KST * SPB * 34));
+    $("qt").innerHTML = `<span>${esc(q.slice(0, n))}</span><span style="opacity:0">${esc(q.slice(n))}</span>`;
+    $("qa").textContent = b > 62.9 ? "— a professora, num comentário real" : ""; $("qa").style.opacity = String(seg(b, 62.9, 63.4));
+  }
+  // recursos, um de cada vez
+  if (b >= S.features[0] && b < S.features[1]) {
+    const per = 2.5, i = Math.min(FEATURES.length - 1, Math.floor((b - 64) / per)), x = (b - 64 - i * per) / per;
+    document.querySelectorAll("#features .fc").forEach((el, k) => { el.style.display = k === i ? "block" : "none"; });
+    const fc = document.querySelectorAll("#features .fc")[i], fw = fc.querySelector(".fw"), fv = fc.querySelector(".fv");
+    fw.style.transform = `translateX(${(1 - eo5(seg(x, 0, .16))) * -120}px)`; fw.style.opacity = String(seg(x, 0, .08));
+    fv.style.transform = `translateX(${(1 - eo5(seg(x, .04, .24))) * 160}px) scale(${lerp(.92, 1, eo5(seg(x, .04, .24)))})`; fv.style.opacity = String(seg(x, .04, .16));
+  }
+  // trio
+  if (b >= S.triple[0] && b < S.triple[1]) {
+    const L = [{ b: 74, t: "JOGA<br>LIMPO.", c: "#ffffff" }, { b: 76, t: "PENSA EM<br>VOZ ALTA.", c: "#f6e05e" }, { b: 78, t: "ENSINA DE<br>VERDADE.", c: "#36d399" }];
+    const cur = [...L].reverse().find(s => b >= s.b) || L[0], x = b - cur.b, sp = (1 - seg(x, 0, .5)) * 18;
+    const el = $("tr"); el.innerHTML = cur.t; el.style.color = cur.c; el.style.opacity = String(b < 79.6 ? 1 : 1 - seg(b, 79.6, 79.95));
+    el.style.transform = `scale(${lerp(1.45, 1, eo5(seg(x, 0, .28)))})`; el.style.textShadow = `${sp}px 0 #ff2e63, ${-sp}px 0 #08f7fe, 0 8px 60px #000`;
+    $("tb").style.transform = `scale(${1 + (b - 74) * .03})`;
+  }
+  // instalação
+  if (b >= S.install[0] && b < S.install[1]) {
+    const x = b - 80, k = eo5(seg(x, 0, 1));
+    $("iw").style.opacity = String(k);
+    $("iw").style.transform = `perspective(2000px) rotateY(${lerp(-16, -5, k)}deg) rotateX(${lerp(8, 1, k)}deg) translateX(${lerp(200, 0, k)}px)`;
+    $("i1").innerHTML = typed("INSTALA E JOGA.", b, 80.2, 30).replace(/(JOGA\.?)/, '<span class="yel">$1</span>');
+    $("i2").innerHTML = ["Baixe.", "Instale.", "Jogue."].map((s, i) => `<div style="opacity:${seg(b, 81.4 + i * .7, 81.8 + i * .7)}">${s}</div>`).join("");
+    $("i3").textContent = b > 83.8 ? "Windows · sem administrador · Stockfish incluso" : ""; $("i3").style.opacity = String(seg(b, 83.8, 84.4));
+    const hl = $("ihl"), sx = 880, sy = 150, f = 1000 / 1280;
+    hl.style.left = (sx + 831 * f) + "px"; hl.style.top = (sy + 246 * f) + "px"; hl.style.width = (370 * f) + "px"; hl.style.height = (44 * f) + "px";
+    hl.style.opacity = String(seg(b, 84.6, 85.0) * (.6 + .4 * Math.abs(Math.sin(t * 6))));
+    $("i4").innerHTML = b > 85 ? `Quer só ver? <span class="yel">Partida de demonstração,</span><br>sem gastar um token.` : ""; $("i4").style.opacity = String(seg(b, 85, 85.6));
+  }
+  // final
+  if (b >= S.finale[0] && b < S.finale[1]) {
+    const x = b - 88, pop = eob(seg(x, 0, .6));
+    $("flogo").style.transform = `scale(${pop * (1 + .035 * beatPulse())}) translateY(${Math.sin(t * 2) * 4}px)`;
+    spellWord("f1", "KIBITZ", b, 88.4, "#ffffff", 0);
+    $("ftag").textContent = typed("A IA que joga. E comenta.", b, 90.4, 24);
+    $("fmeta").textContent = b > 92.4 ? "open source · beta para windows" : ""; $("fmeta").style.opacity = String(seg(b, 92.4, 93.1));
+    $("furl").textContent = typed("github.com/Andrade020/kibitz", b, 94, 24) + (b > 94 && b < 99 && Math.floor(t * 3.4) % 2 === 0 ? "▌" : "");
+    $("fnote").textContent = b > 97 ? "Feito com Claude Code. E jogado contra ele." : ""; $("fnote").style.opacity = String(seg(b, 97, 97.8));
+    $("glow").style.opacity = String(.35 + .35 * beatPulse());
+    finale.style.opacity = String(1 - seg(b, 102.7, 103.9));
+  }
+  // flashes, grão, tremor
+  $("flash").style.opacity = String(Math.min(.9, Math.max(0, ...TL.flashes.map(c => (b >= c ? (1 - seg(b, c, c + .28)) * (c === 24 || c === 88 ? .85 : .55) : 0)))));
+  grainEl.style.backgroundPosition = `${rnd(fr) * 200}px ${rnd(fr + 5) * 200}px`;
+  const sh = slamAt(b, [8, 11, 14, 20, 40, 74, 76, 78], .35); stage.style.transform = sh > .02 ? `translate(${(rnd(fr * 2.3) - .5) * sh * 18}px, ${(rnd(fr * 4.1) - .5) * sh * 18}px)` : "";
+};
+
+(async () => {
+  await document.fonts.ready;
+  await Promise.all([...document.images].map(i => i.decode().catch(() => { })));
+  document.querySelectorAll(".boardbg").forEach(el => { el.style.backgroundImage = `url(${A("board")})`; });
+  window.__READY = true;
+})();
+</script>
+</body>
+</html>

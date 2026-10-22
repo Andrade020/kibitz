@@ -13,9 +13,9 @@ labels: bug
 2.
 
 **Environment**
-- Think-Aloud Chess version (shown next to the title):
+- Kibitz version (shown next to the title):
 - Install method: Windows installer / pipx / clone
 - OS:
 - Model used (Claude Code `opus`/`sonnet`, or an API provider + model):
 
-**Logs** (Windows installer: `%LOCALAPPDATA%\ThinkAloudChess\logs\app.log`). Please remove any API keys.
+**Logs** (Windows installer: `%LOCALAPPDATA%\Kibitz\logs\app.log`). Please remove any API keys.

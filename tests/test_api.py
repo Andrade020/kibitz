@@ -3,7 +3,7 @@ import time
 
 import chess
 
-from think_aloud_chess import agent, app as app_module
+from kibitz import agent, app as app_module
 
 
 def _new_game(client, **kw):

@@ -25,7 +25,7 @@ def _log_to_file():
 def _ours(port):
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/ping", timeout=3) as r:
-            return json.load(r).get("app") == "think-aloud-chess"
+            return json.load(r).get("app") == "kibitz"
     except Exception:
         return False
 
@@ -45,12 +45,12 @@ def _tray(url, srv):
     except Exception:  # sem bandeja (ex.: Linux sem suporte): fica servindo até o processo ser encerrado
         threading.Event().wait()
         return
-    menu_items = [pystray.MenuItem("Abrir o Think-Aloud Chess", lambda i, it: webbrowser.open(url), default=True)]
+    menu_items = [pystray.MenuItem("Abrir o Kibitz", lambda i, it: webbrowser.open(url), default=True)]
     if sys.platform == "win32":
         menu_items.append(pystray.MenuItem("Abrir pasta de dados", lambda i, it: os.startfile(paths.DATA)))
     menu_items.append(pystray.MenuItem("Sair", lambda i, it: i.stop()))
-    icon = pystray.Icon("ThinkAloudChess", Image.open(paths.PKG / "assets" / "icon.png"),
-                        f"Think-Aloud Chess {__version__}", pystray.Menu(*menu_items))
+    icon = pystray.Icon("Kibitz", Image.open(paths.PKG / "assets" / "icon.png"),
+                        f"Kibitz {__version__}", pystray.Menu(*menu_items))
     icon.run()
 
 
@@ -69,7 +69,7 @@ def main():
     srv = make_server("127.0.0.1", port, app, threaded=True)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{port}"
-    print(f"Think-Aloud Chess {__version__} em {url} | dados: {paths.DATA}", flush=True)
+    print(f"Kibitz {__version__} em {url} | dados: {paths.DATA}", flush=True)
     webbrowser.open(url)
     try:
         _tray(url, srv)

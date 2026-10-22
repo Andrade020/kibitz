@@ -17,7 +17,7 @@ def _free_port(host, start):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="think-aloud-chess", description="Jogue xadrez contra um LLM que pensa em voz alta.")
+    ap = argparse.ArgumentParser(prog="kibitz", description="Jogue xadrez contra um LLM que pensa em voz alta.")
     ap.add_argument("--host", default="127.0.0.1", help="endereço (padrão 127.0.0.1: só este computador)")
     ap.add_argument("--port", type=int, default=5000, help="porta inicial (procura a próxima livre)")
     ap.add_argument("--data-dir", help="pasta de partidas, autosaves e config.json")
@@ -39,7 +39,7 @@ def main(argv=None):
 
     port = _free_port(args.host, args.port)
     url = f"http://{args.host}:{port}"
-    print(f"\n  Think-Aloud Chess {__version__}\n  Abra {url}  (Ctrl+C para encerrar)\n  Dados: {paths.DATA}\n")
+    print(f"\n  Kibitz {__version__}\n  Abra {url}  (Ctrl+C para encerrar)\n  Dados: {paths.DATA}\n")
     if not args.no_browser:
         threading.Thread(target=lambda: (time.sleep(1.2), webbrowser.open(url)), daemon=True).start()
     app.run(host=args.host, port=port, debug=False, threaded=True)

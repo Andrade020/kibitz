@@ -6,7 +6,7 @@ import textwrap
 import chess
 import pytest
 
-from think_aloud_chess import audit, review, strong
+from kibitz import audit, review, strong
 
 
 def _game(sans):
@@ -62,7 +62,7 @@ def fake_engine(tmp_path):
         import sys
         sys.path.insert(0, %r)
         import chess
-        from think_aloud_chess import engine
+        from kibitz import engine
         board, mpv = chess.Board(), 1
         for line in sys.stdin:
             t = line.split()

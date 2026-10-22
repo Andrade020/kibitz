@@ -581,7 +581,7 @@ SETUP = {"installing": False, "log": "", "ok": None}
 @app.get("/api/ping")
 def ping():
     """Instantâneo: usado pelo lançador para saber se já existe uma instância rodando."""
-    return jsonify({"app": "think-aloud-chess", "version": __version__})
+    return jsonify({"app": "kibitz", "version": __version__})
 
 
 @app.get("/api/health")

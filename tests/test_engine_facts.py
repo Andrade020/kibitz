@@ -1,6 +1,6 @@
 import chess
 
-from think_aloud_chess import engine, facts
+from kibitz import engine, facts
 
 
 def test_engine_finds_mate_in_one():

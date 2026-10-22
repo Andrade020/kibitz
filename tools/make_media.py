@@ -1,4 +1,4 @@
-"""Gera as imagens do README (capturas, GIF e pré-visualização social) a partir da partida de demonstração.
+"""Gera as imagens do README (capturas e GIF, no tema escuro) a partir da partida de demonstração.
 
 Sobe o app numa pasta de dados temporária (como uma instalação nova), então não usa nem altera suas partidas.
 Requer: pip install playwright pillow && python -m playwright install chromium
@@ -13,13 +13,12 @@ import time
 import urllib.request
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "img"
 PORT = 5057
 BASE = f"http://127.0.0.1:{PORT}"
-FONTS = {"regular": r"C:\Windows\Fonts\segoeui.ttf", "bold": r"C:\Windows\Fonts\segoeuib.ttf"}
 
 
 def call(path, method="GET", data=None, raw=False):
@@ -28,38 +27,12 @@ def call(path, method="GET", data=None, raw=False):
     return json.load(urllib.request.urlopen(req))
 
 
-def font(kind, size):
-    p = FONTS[kind]
-    return ImageFont.truetype(p, size) if Path(p).exists() else ImageFont.load_default()
-
-
-def social(hero_png, out):
-    W, H = 1280, 640
-    img = Image.new("RGB", (W, H), (20, 24, 32))
-    d = ImageDraw.Draw(img)
-    for y in range(H):  # degradê
-        t = y / H
-        d.line([(0, y), (W, y)], fill=(int(18 + 14 * t), int(24 + 22 * t), int(36 + 34 * t)))
-    logo = Image.open(ROOT / "docs" / "logo.png").convert("RGBA").resize((150, 150), Image.LANCZOS)
-    img.paste(logo, (70, 70), logo)
-    d.text((70, 250), "Think-Aloud", font=font("bold", 76), fill=(246, 224, 94))
-    d.text((70, 335), "Chess", font=font("bold", 76), fill=(255, 255, 255))
-    for i, line in enumerate(["Play chess against an LLM that", "thinks out loud — then let it teach", "you with arrows and concepts."]):
-        d.text((72, 450 + i * 36), line, font=font("regular", 28), fill=(190, 200, 214))
-    shot = Image.open(hero_png).convert("RGB")
-    shot = shot.crop((0, 70, 1280, 800)).resize((700, int(700 * 730 / 1280)), Image.LANCZOS)
-    mask = Image.new("L", shot.size, 0)
-    ImageDraw.Draw(mask).rounded_rectangle([0, 0, shot.size[0] - 1, shot.size[1] - 1], radius=18, fill=255)
-    img.paste(shot, (W - 700 - 40, (H - shot.size[1]) // 2 + 10), mask)
-    img.save(out, optimize=True)
-
-
 def main():
     from playwright.sync_api import sync_playwright
 
     OUT.mkdir(parents=True, exist_ok=True)
     tmp = tempfile.mkdtemp(prefix="tac-media-")
-    srv = subprocess.Popen([sys.executable, "-m", "think_aloud_chess", "--no-browser", "--port", str(PORT), "--data-dir", tmp],
+    srv = subprocess.Popen([sys.executable, "-m", "kibitz", "--no-browser", "--port", str(PORT), "--data-dir", tmp],
                            cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         for _ in range(60):
@@ -80,7 +53,7 @@ def main():
 
         with sync_playwright() as p:
             br = p.chromium.launch()
-            pg = br.new_page(viewport={"width": 1280, "height": 860})
+            pg = br.new_page(viewport={"width": 1280, "height": 860}, color_scheme="dark")
 
             def shot(name, clip=None):
                 pg.wait_for_timeout(350)
@@ -88,7 +61,7 @@ def main():
 
             # 1) configuração inicial (simula um computador sem o Claude Code)
             pg.route("**/api/health*", lambda r: r.fulfill(json={
-                "version": "0.1.0b1", "claude": {"installed": False, "logged_in": False, "path": None}, "api_providers": 0,
+                "version": "0.1.0b2", "claude": {"installed": False, "logged_in": False, "path": None}, "api_providers": 0,
                 "stockfish": {"found": True, "name": "Stockfish 19"}, "data_dir": "", "demo": True, "can_auto_install": True,
                 "setup": {"installing": False, "log": "", "ok": None}}))
             pg.goto(BASE + "/")
@@ -126,21 +99,19 @@ def main():
                 frames.append(Image.open(path).convert("RGB").copy())
 
             frame()  # posição inicial do modo revisão
+            AI_MOMENTS = (1, 7, 10)  # comentários sobre lances da IA (7...exd4, 20...Qe6, 26...Nf3+): é o que vitrine mostra
             n = 0
-            while not pg.locator("[data-cm='1']").is_disabled():
+            while n < 10 and not pg.locator("[data-cm='1']").is_disabled():
                 pg.locator("[data-cm='1']").click()
                 n += 1
-                frame()
-                if n == 3:
-                    shot("review-comment.png")           # um comentário com setas
+                if n in AI_MOMENTS:
+                    frame()
                 if n == 7:
+                    shot("review-comment.png")
+                if n == 10:
                     shot("review-hero.png")
-                if n >= 9:
-                    break
             pg.locator("[data-before]").click()
             shot("review-before.png")
-            pg.locator("[data-tab='sum']").click()
-            shot("review-summary.png")
             br.close()
 
         # GIF do passeio pela revisão
@@ -148,7 +119,6 @@ def main():
         small[0].save(OUT / "review-walkthrough.gif", save_all=True, append_images=small[1:], duration=[1400] + [2600] * (len(small) - 1),
                       loop=0, optimize=True)
         (OUT / "_frame.png").unlink(missing_ok=True)
-        social(OUT / "review-hero.png", OUT / "social-preview.png")
         for f in sorted(OUT.iterdir()):
             print(f"{f.name:28s} {f.stat().st_size // 1024:5d} KB")
     finally:

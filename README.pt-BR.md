@@ -1,88 +1,107 @@
 <div align="center">
 
-<img src="docs/logo.png" alt="Logo do Think-Aloud Chess" width="120">
+<img src="docs/img/banner-pt.png" alt="Kibitz: a IA de xadrez que pensa em voz alta" width="100%">
 
-# Think-Aloud Chess
+[![Release](https://img.shields.io/github/v/release/Andrade020/kibitz?include_prereleases&label=release&color=f6e05e&labelColor=0e1420)](https://github.com/Andrade020/kibitz/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/Andrade020/kibitz/ci.yml?label=testes&labelColor=0e1420)](https://github.com/Andrade020/kibitz/actions/workflows/ci.yml)
+[![Licença](https://img.shields.io/badge/licen%C3%A7a-GPL--3.0--or--later-5aa2ff?labelColor=0e1420)](LICENSE)
 
-**Jogue xadrez contra um LLM que pensa em voz alta — e depois deixe que ele te ensine.**
+**[Baixar para Windows](https://github.com/Andrade020/kibitz/releases)** &nbsp;·&nbsp; [English](README.md) &nbsp;·&nbsp; [Como funciona](docs/ARCHITECTURE.md)
 
-[![Release](https://img.shields.io/github/v/release/Andrade020/think-aloud-chess?include_prereleases&label=release&color=f6e05e)](https://github.com/Andrade020/think-aloud-chess/releases)
-[![CI](https://github.com/Andrade020/think-aloud-chess/actions/workflows/ci.yml/badge.svg)](https://github.com/Andrade020/think-aloud-chess/actions/workflows/ci.yml)
-[![Licença: GPL v3+](https://img.shields.io/badge/licen%C3%A7a-GPL--3.0--or--later-blue.svg)](LICENSE)
-
-[**⬇ Baixar para Windows**](https://github.com/Andrade020/think-aloud-chess/releases/download/v0.1.0-beta.1/ThinkAloudChess-0.1.0-beta.1-Setup.exe) · [English](README.md) · [Arquitetura](docs/ARCHITECTURE.md)
-
-<img src="docs/img/review-walkthrough.gif" alt="Modo revisão: passando pela partida, com comentários e setas ao lado do tabuleiro" width="860">
+<img src="docs/img/review-walkthrough.gif" alt="Passando pela partida: comentários e setas aparecem ao lado do tabuleiro" width="860">
 
 </div>
 
-> **Beta.** Funciona de ponta a ponta e tem testes automatizados. O instalador do Windows **ainda não é assinado digitalmente** (veja [Instalação](#instalação)).
+**O Kibitz joga xadrez contra você do jeito que uma pessoa joga: lê o tabuleiro, pesa suas ameaças, faz um plano e conta o que está pensando. Quando a partida acaba, ele vira treinador e conduz você pelo jogo, com setas, ideias e a verdade do Stockfish.**
+
+> **Beta.** Funciona do começo ao fim. O instalador do Windows ainda não tem assinatura digital (detalhes [abaixo](#instalação)).
 
 ## Por que isso existe
 
-Motores como o Stockfish dizem *o que* é melhor, mas não *por que*, em termos humanos — "eu queria a sétima fila e prender o rei" é um conceito, não uma árvore de busca. Um modelo de linguagem pode jogar por intuição e explicar o que fez com esses conceitos. O problema: LLMs vão bem na abertura e mal depois, inventam lances ilegais, e uma dica de motor pode transformar a "explicação" numa justificativa inventada depois do fato.
+Peça uma partida de xadrez a um chatbot e, por volta do lance 15, o cavalo pula por cima da própria torre. Pergunte a um motor por que ele fez um lance e você recebe um número. O Kibitz tenta ser o que fica no meio: um adversário que joga xadrez legal e com cara de gente, e um professor que explica o jogo em ideias (o centro, um peão fraco, uma coluna aberta) e não em árvores de busca.
 
-O Think-Aloud Chess é um **jeito justo e auditável de jogar contra um LLM e aprender com ele**:
+Duas apostas fazem isso funcionar.
 
-- o modelo **pensa em voz alta** a cada lance (leitura da posição, ameaças, plano, candidatos, checagem anti-erro) e tudo fica salvo;
-- todo lance é **validado** contra a lista de lances legais; fatos objetivos (peças em risco, ameaças) são calculados por código;
-- **você controla quanta ajuda de motor ele recebe**, e um motor escondido audita se ele raciocina de verdade ou só racionaliza a escolha do motor;
-- depois, um **professor de IA** (com o Stockfish como verdade) revisa a partida no estilo do chess.com, explicando os erros **por conceitos** e desenhando setas.
+**Nunca pedir ao modelo que lembre do tabuleiro.** A cada lance ele recebe a posição inteira de novo, a lista de lances legais e alguns fatos calculados por código: quais peças estão penduradas, o que você está ameaçando. Um chatbot que precisa reconstruir o tabuleiro a partir de uma lista de lances se perde. Um que simplesmente *vê* o tabuleiro, não.
 
-## Recursos
+**Nunca deixar uma explicação ser inventada.** O treinador recebe a verdade do Stockfish e precisa admitir quando um lance é só cálculo e não um conceito. Cada lance e cada seta que ele sugere é conferido antes de chegar até você.
 
-- 🧠 **Raciocínio em camadas**, com o raciocínio de cada lance guardado (oculto até o fim da partida, para ser justo).
-- 🛡️ **Sem lances alucinados**: validação, fatos por código e um revisor barato (Haiku) que só entra quando há sinal real de risco.
-- ⚖️ **Ajuda de motor ajustável**: completa, só material, ou nenhuma. Auditoria de concordância com o motor.
-- 🎓 **Revisão do professor** (opcional): Stockfish escolhe os momentos críticos; o professor explica por conceitos, inclusive onde o **próprio Claude errou a leitura**. Setas, casas destacadas, barra de avaliação, botão "próximo comentário", sons.
-- 📊 **Auditoria**: precisão, perda média, erros e blunders dos dois lados.
-- 💸 **Econômico em tokens**: cada lance é independente (o custo não cresce com a partida), com orçamento suave por partida.
-- 🔌 **Traga o seu "cérebro"**: sua conta do **Claude Code** ou qualquer **API compatível com OpenAI** (DeepSeek, OpenAI, OpenRouter, Groq, Ollama…).
-- 💾 **Suas partidas são suas**: exportar/importar `.gz`, autosave em Markdown legível, desfazer lance — tudo local.
+## Como é jogar
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="docs/img/live-game.png" alt="Uma partida em andamento, com o raciocínio da IA trancado"></td>
+<td width="50%" valign="top"><h3>Ela pensa em voz alta.</h3>Cada lance vem com uma leitura da posição, as ameaças que ela vê, um plano e uma checagem anti-erro, tudo salvo. Durante a partida esse raciocínio fica trancado, e nenhum dos dois pode espiar. Quando a partida acaba, ele se abre.</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><h3>Depois, ela kibitza.</h3>Aperte <b>Começar a revisão</b> e passe pela partida. Nos lances que importaram, um comentário e as setas aparecem sozinhos; <i>próximo comentário</i> pula para o seguinte. <i>Ver antes do lance</i> mostra a posição em que a decisão foi tomada.</td>
+<td width="50%" valign="top"><img src="docs/img/review-comment.png" alt="Modo revisão: um comentário com setas e etiquetas de conceito"></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/img/setup.png" alt="Assistente da primeira abertura"></td>
+<td width="50%" valign="top"><h3>Justo, e seu.</h3>Escolha quanta ajuda de motor a IA recebe, até nenhuma. Use sua conta do Claude ou qualquer API compatível com OpenAI (DeepSeek, OpenAI, OpenRouter, Ollama). Partidas, chaves e anotações ficam no seu computador. Um assistente configura tudo na primeira abertura, e uma <b>partida de demonstração</b> deixa você testar a revisão sem gastar um token.</td>
+</tr>
+</table>
 
 ## Instalação
 
-### Windows (recomendado)
+### Windows
 
-1. Baixe o **`ThinkAloudChess-<versão>-Setup.exe`** na [página de Releases](https://github.com/Andrade020/think-aloud-chess/releases).
-2. Execute. Não precisa de administrador; o Python e o Stockfish já vêm junto.
-3. Abra o **Think-Aloud Chess**. Um assistente na primeira abertura ajuda a conectar um "cérebro" (sua conta do Claude ou uma chave de API). Dá para abrir a **partida de demonstração**, uma partida terminada com revisão completa, sem gastar um token.
+1. Baixe o **`Kibitz-<versão>-Setup.exe`** na [página de Releases](https://github.com/Andrade020/kibitz/releases).
+2. Execute. Não precisa de administrador, e o Python e o Stockfish já vêm junto.
+3. Abra o **Kibitz**. Um assistente conecta a IA (sua conta do Claude ou uma chave de API). Ou abra direto a partida de demonstração.
 
-> **"O Windows protegeu o computador"?** O instalador beta ainda não é assinado digitalmente (certificados de assinatura custam dinheiro e exigem verificação de identidade), então o SmartScreen mostra *Editor desconhecido*. Clique em **Mais informações → Executar assim mesmo**. Você pode conferir o download com o `.sha256` publicado, e todo o código-fonte e o processo de build estão abertos. Os planos para assinar estão em [docs/SIGNING.md](docs/SIGNING.md).
+> **"O Windows protegeu o computador"?** O instalador beta não é assinado digitalmente (certificados custam dinheiro e exigem verificação de identidade), então o SmartScreen mostra *Editor desconhecido*. Clique em **Mais informações e depois em Executar assim mesmo**. Confira o download com o `.sha256` publicado, leia o código ou veja como o build é feito e atestado em [`installer/`](installer). Planos de assinatura: [docs/SIGNING.md](docs/SIGNING.md).
 
-### macOS / Linux / pelo código-fonte
+### macOS e Linux
 
 ```bash
-pipx install git+https://github.com/Andrade020/think-aloud-chess.git   # ou: pip install .
-think-aloud-chess            # abre http://127.0.0.1:5000
+pipx install git+https://github.com/Andrade020/kibitz.git     # ou: pip install .
+kibitz                                                          # abre http://127.0.0.1:5000
 ```
 
-Requisitos: Python 3.10+. Para o modelo, **ou** o [Claude Code](https://claude.com/claude-code) (rode `claude` uma vez para entrar) **ou** uma chave de API de qualquer provedor compatível com OpenAI (configurada no app). O Stockfish é opcional, mas recomendado para a revisão (`winget install Stockfish.Stockfish`, `brew install stockfish`, `apt install stockfish`).
+Você precisa do Python 3.10+, mais **ou** o [Claude Code](https://claude.com/claude-code) (rode `claude` uma vez para entrar) **ou** uma chave de API de um provedor compatível com OpenAI (configurada dentro do app). O Stockfish é opcional, mas melhora muito o treinador: `brew install stockfish`, `apt install stockfish` ou `winget install Stockfish.Stockfish`.
 
-## Seus dados e privacidade
+## Por dentro
 
-Tudo é local. Partidas, autosaves e o `config.json` (chaves de API) ficam na pasta de dados: `%LOCALAPPDATA%\ThinkAloudChess` no Windows, ou `./data` ao rodar de um clone. As chaves nunca vão para partidas, arquivos exportados nem para o navegador. O app só fala com o provedor **que você** configurar (e com o winget, só quando você pede para instalar o Claude Code). Sem telemetria. Veja [SECURITY.md](SECURITY.md).
+```mermaid
+flowchart LR
+    H([Você]) -- lance --> V{Legal?}
+    V --> F[Fatos por código<br/>peças penduradas, ameaças]
+    F --> P[Dica de motor raso<br/>opcional, você escolhe o nível]
+    P --> L[["O LLM pensa em voz alta<br/>prompt novo a cada lance"]]
+    L -- lance --> C{Legal?}
+    C -- não --> L
+    C -- sim --> B([Tabuleiro])
+    B -. depois da partida .-> A[Stockfish acha os momentos-chave]
+    A --> T[["O treinador explica em ideias<br/>e desenha setas"]]
+```
 
-## Limitações conhecidas (beta)
+A IA não recebe ferramentas nem motor, a não ser que você permita uma dica rasa e claramente rotulada. Cada lance registra se coincidiu com a escolha do motor escondido, para você distinguir raciocínio de racionalização. A história completa está em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-- A interface está só em português; internacionalização planejada.
-- Um humano contra um LLM; sem relógio, sem livro de aberturas, sem tablebases (por escolha).
-- O motor usado *durante* a partida é raso (3 lances); só o professor *depois* da partida usa o Stockfish.
-- Instalador do Windows sem assinatura; macOS/Linux sem instalador por enquanto (use `pipx`).
-- A estimativa de rating **não** é exibida de propósito: poucas partidas e uma régua rasa não a sustentam.
+## Seus dados
 
-## Desenvolvimento
+Tudo é local. Partidas, autosaves e o `config.json` (chaves de API) ficam em `%LOCALAPPDATA%\Kibitz` no Windows, ou em `./data` ao rodar de um clone. As chaves nunca vão para partidas, arquivos exportados nem para o navegador. O app só fala com o provedor de modelo que você configurar, mais o winget quando você pede para instalar o Claude Code. Sem telemetria. Veja [SECURITY.md](SECURITY.md).
+
+## O que ele ainda não faz
+
+- Falar inglês na interface. O texto está em português por enquanto; a internacionalização está na lista. README e docs são bilíngues.
+- Jogar com relógio, livro de aberturas ou tablebases. É de propósito.
+- Usar o Stockfish *durante* a partida. Só o treinador usa, depois do último lance.
+- Estimar o seu rating. Poucas partidas e uma régua rasa não sustentam um número, então ele não finge.
+- Vir assinado ou com instalador para macOS e Linux. Esses são os próximos passos.
+
+## Mexa no código
 
 ```bash
-git clone https://github.com/Andrade020/think-aloud-chess && cd think-aloud-chess
-pip install -e ".[dev]" && pytest          # 26 testes, sem rede e sem tokens
-python -m think_aloud_chess                # roda do clone (dados em ./data)
+git clone https://github.com/Andrade020/kibitz && cd kibitz
+pip install -e ".[dev]" && pytest         # sem rede e sem tokens
+python -m kibitz                          # roda do clone, dados em ./data
 powershell -File installer/build_windows.ps1   # gera o instalador do Windows
-python tools/make_media.py                 # regenera as imagens do README
 ```
 
-Contribuições são bem-vindas: veja [CONTRIBUTING.md](CONTRIBUTING.md).
+Contribuições são bem-vindas: veja [CONTRIBUTING.md](CONTRIBUTING.md). Bons pontos de partida: textos da interface em inglês, instaladores para macOS e Linux e prompts de ensino melhores.
 
-## Licença e créditos
+## Licença
 
 [GPL-3.0-or-later](LICENSE). Construído sobre [python-chess](https://github.com/niklasf/python-chess) (GPL-3.0+), [Flask](https://flask.palletsprojects.com/) (BSD-3) e [Stockfish](https://github.com/official-stockfish/Stockfish) (GPLv3, incluído no instalador). Sem vínculo com a Anthropic; "Claude" é marca da Anthropic.
